@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+dist
+.vercel
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+public/uploads/*
+!public/uploads/.gitkeep
+drizzle
+next-env.d.ts
+*.tsbuildinfo

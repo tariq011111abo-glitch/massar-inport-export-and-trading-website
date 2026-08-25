@@ -1,0 +1,22 @@
+تغير كلمه السر 
+1- الدخول الى  ملف البرنامج 
+2- فتح ترمنل 
+3- تحميل الحزم   كتابه الكود في ترمنل (npm install)
+4-  بعد الانتها   ادخل الكود الاتي في ترمنل حتى يظهر لك كود مشفر 
+)(node -e "const b=require('bcryptjs'); console.log(b.hashSync('NEW PAWWORD', 10));")
+5-  انسخ الكود المشفر  من ترمنل 
+$2b$10$3HM3IYyJPj/CELEPWdh3Judtba01xWQcOkjWw9sjJWeNMe6aKintW
+6- الصق الكود في كود الداتا بيس
+UPDATE admins SET password_hash = 'الهاش_هنا' WHERE email = 'admin@massar-group.com';
+7- UPDATE admins SET password_hash = '$2b$10$3HM3IYyJPj/CELEPWdh3Judtba01xWQcOkjWw9sjJWeNMe6aKintW' WHERE email = 'admin@massar-group.com';
+
+8-اذهب الى نود     اسكيو اديتر  ودخل الكود ونفذ
+9- الخطوات الي فوق  تفير كلمه السر 
+تغير ايميل  الدخول
+-UPDATE admins SET email = 'الايميل الجديد' WHERE email = 'الايميل السابق';
+UPDATE admins SET email = 'admin@massartrading.com' WHERE email = 'admin@massar-group.com';
+الدخول ال نود اسكيو ال وتغيرها
+   
+
+11- التاكد من انه تم تغيرر كلمه السر  و الايميل اكتب الكود الاتي
+SELECT email, password_hash FROM admins;
