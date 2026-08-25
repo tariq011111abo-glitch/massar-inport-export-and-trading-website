@@ -92,6 +92,7 @@ export const products = pgTable("products", {
   productStatus: varchar("product_status", { length: 40 }).notNull(),
   visible: boolean("visible").default(true).notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
+  weights: text("weights"), 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -141,3 +142,4 @@ export const media = pgTable("media", {
   data: text("data").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
