@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { StoreBadges } from "@/components/site/StoreBadges";
@@ -12,6 +12,7 @@ import { getSiteData, publicNav, publicStores } from "@/lib/site";
 import { isLocale } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({
   params,
@@ -20,7 +21,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
-  const [product] = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
+  const [product] = await db.select().from(products).where(and(eq(products.slug, slug), eq(products.visible, true))).limit(1);
   if (!product) return {};
   return {
     title: t(product.name, locale),
@@ -38,9 +39,19 @@ export default async function ProductPage({
 }) {
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
+  
+  // جلب البيانات العامة التخطيطية مثل النوافذ والمتاجر
   const data = await getSiteData();
-  const product = data.products.find((item) => item.slug === slug && item.visible);
+  
+  // ⚡ الحل: جلب المنتج مباشرة وبشكل حي من قاعدة بيانات نيون بدون كاش
+  const [product] = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.slug, slug), eq(products.visible, true)))
+    .limit(1);
+    
   if (!product) notFound();
+  
   const nav = publicNav(data);
   const stores = publicStores(data);
 
@@ -100,4 +111,3 @@ export default async function ProductPage({
     </div>
   );
 }
-
