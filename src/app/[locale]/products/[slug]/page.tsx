@@ -75,6 +75,12 @@ export default async function ProductPage({
               <dt className="uppercase tracking-[0.16em] text-muted">{ui.availability[locale]}</dt>
               <dd className="mt-1 text-lg text-forest">{labelForStatus(product.productStatus, locale)}</dd>
             </div>
+            {product.weights ? (
+              <div>
+                <dt className="uppercase tracking-[0.16em] text-muted">{locale === 'ar' ? 'الأوزان المتاحة' : 'Available Weights'}</dt>
+                <dd className="mt-1 text-lg text-forest">{product.weights}</dd>
+              </div>
+            ) : null}
           </dl>
           <a
             href={`/${locale}#contact`}
@@ -94,3 +100,4 @@ export default async function ProductPage({
     </div>
   );
 }
+
