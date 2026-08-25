@@ -195,6 +195,7 @@ export async function saveProduct(form: {
   productStatus: string;
   visible: boolean;
   sortOrder: number;
+  weights?: string | null;
 }) {
   await requireAdmin();
   const slug = slugify(form.slug || form.name.en || `product-${Date.now()}`);
@@ -208,6 +209,7 @@ export async function saveProduct(form: {
     productStatus: form.productStatus || "both",
     visible: form.visible,
     sortOrder: Number(form.sortOrder) || 0,
+    weights: form.weights || null,
   };
   if (form.id) {
     await db.update(products).set(payload).where(eq(products.id, form.id));
@@ -320,25 +322,16 @@ export async function deleteCountry(id: number) {
 export async function submitInquiry(form: {
   name: string;
   email: string;
-  phone?: string;
+  phone?: string | null;
   message: string;
-  locale?: Locale;
+  locale?: string;
 }) {
-  if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
-    throw new Error("Missing required fields");
-  }
-  await db.insert(inquiries).values({
+  const payload = {
     name: form.name.trim(),
-    email: form.email.trim(),
+    email: form.email.trim().toLowerCase(),
     phone: form.phone?.trim() || null,
     message: form.message.trim(),
     locale: form.locale || "en",
-  });
-  revalidatePath("/console/inquiries");
-}
-
-export async function deleteInquiry(id: number) {
-  await requireAdmin();
-  await db.delete(inquiries).where(eq(inquiries.id, id));
-  revalidatePath("/console/inquiries");
+  };
+  await db.insert(inquiries).values(payload);
 }
