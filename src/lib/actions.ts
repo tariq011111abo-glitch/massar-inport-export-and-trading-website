@@ -335,3 +335,9 @@ export async function submitInquiry(form: {
   };
   await db.insert(inquiries).values(payload);
 }
+
+export async function deleteInquiry(id: number) {
+  await requireAdmin();
+  await db.delete(inquiries).where(eq(inquiries.id, id));
+  revalidatePublic();
+}
