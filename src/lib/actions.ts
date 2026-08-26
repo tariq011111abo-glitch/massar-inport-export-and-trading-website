@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
-import { redirect } from "next/navigation"; // 👈 استيراد دالة التوجيه الرسمية
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   countries,
@@ -212,17 +211,12 @@ export async function saveProduct(form: {
     sortOrder: Number(form.sortOrder) || 0,
     weights: form.weights || null,
   };
-  
   if (form.id) {
     await db.update(products).set(payload).where(eq(products.id, form.id));
   } else {
     await db.insert(products).values(payload);
   }
-  
   revalidatePublic();
-  
-  // ⚡ الحل لمنع الـ 404: توجيه المستخدم تلقائياً بعد إنهاء الحفظ بنجاح
-  redirect("/console/products"); 
 }
 
 export async function deleteProduct(id: number) {
