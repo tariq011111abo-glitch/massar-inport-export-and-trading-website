@@ -340,7 +340,7 @@ export async function submitInquiry(form: {
   phone: form.phone?.trim(),
   message: form.message.trim(),
   locale: form.locale || "en",
-});س
+});
 }
 
 export async function deleteInquiry(id: number) {
