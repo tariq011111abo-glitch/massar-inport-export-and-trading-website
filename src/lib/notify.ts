@@ -11,8 +11,7 @@ export async function sendContactNotification(formData: {
 }) {
   try {
     const [settings] = await db.select().from(siteSettings).limit(1);
-    const contactEmail = settings?.email || "info@massartrading.com";
-
+    const contactEmail = "info@massartrading.com";
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       const nodemailer = await import("nodemailer");
       const transporter = nodemailer.createTransport({
