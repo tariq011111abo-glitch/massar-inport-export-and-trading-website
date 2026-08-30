@@ -1,5 +1,5 @@
 "use server";
-
+import { sendContactNotification } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -334,6 +334,13 @@ export async function submitInquiry(form: {
     locale: form.locale || "en",
   };
   await db.insert(inquiries).values(payload);
+  await sendContactNotification({
+  name: form.name.trim(),
+  email: form.email.trim(),
+  phone: form.phone?.trim(),
+  message: form.message.trim(),
+  locale: form.locale || "en",
+});س
 }
 
 export async function deleteInquiry(id: number) {
