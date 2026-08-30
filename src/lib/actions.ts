@@ -1,8 +1,9 @@
 "use server";
-import { sendContactNotification } from "@/lib/notify";
+
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "@/db";
+import { sendContactNotification } from "@/lib/notify";
 import {
   countries,
   highlights,
@@ -193,9 +194,9 @@ export async function saveProduct(form: {
   category: string;
   originCountry: string;
   productStatus: string;
+  weights?: string;
   visible: boolean;
   sortOrder: number;
-  weights?: string | null;
 }) {
   await requireAdmin();
   const slug = slugify(form.slug || form.name.en || `product-${Date.now()}`);
@@ -207,9 +208,9 @@ export async function saveProduct(form: {
     category: form.category || "other",
     originCountry: form.originCountry || "Saudi Arabia",
     productStatus: form.productStatus || "both",
+    weights: form.weights || null,
     visible: form.visible,
     sortOrder: Number(form.sortOrder) || 0,
-    weights: form.weights || null,
   };
   if (form.id) {
     await db.update(products).set(payload).where(eq(products.id, form.id));
@@ -322,29 +323,44 @@ export async function deleteCountry(id: number) {
 export async function submitInquiry(form: {
   name: string;
   email: string;
-  phone?: string | null;
+  phone?: string;
   message: string;
-  locale?: string;
+  locale?: Locale;
 }) {
-  const payload = {
+  if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+    throw new Error("Missing required fields");
+  }
+  // Prevent duplicate rapid submissions from same contact within 60 seconds
+  const recent = await db.select().from(inquiries)
+    .where(eq(inquiries.email, form.email.trim()))
+    .orderBy(desc(inquiries.createdAt))
+    .limit(1);
+  if (recent.length > 0) {
+    const lastTime = recent[0].createdAt?.getTime?.() || 0;
+    if (Date.now() - lastTime < 60000) {
+      return; // ignore duplicate
+    }
+  }
+  await db.insert(inquiries).values({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone?.trim() || null,
+      message: form.message.trim(),
+      locale: form.locale || "en",
+    });
+  // Fire-and-forget notification so form never hangs
+  sendContactNotification({
     name: form.name.trim(),
-    email: form.email.trim().toLowerCase(),
-    phone: form.phone?.trim() || null,
+    email: form.email.trim(),
+    phone: form.phone?.trim(),
     message: form.message.trim(),
     locale: form.locale || "en",
-  };
-  await db.insert(inquiries).values(payload);
-  await sendContactNotification({
-  name: form.name.trim(),
-  email: form.email.trim(),
-  phone: form.phone?.trim(),
-  message: form.message.trim(),
-  locale: form.locale || "en",
-});
+  }).catch(() => {});
+  revalidatePath("/console/inquiries");
 }
 
 export async function deleteInquiry(id: number) {
   await requireAdmin();
   await db.delete(inquiries).where(eq(inquiries.id, id));
-  revalidatePublic();
+  revalidatePath("/console/inquiries");
 }
