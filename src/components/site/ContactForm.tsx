@@ -70,7 +70,8 @@ export function ContactForm({ locale }: { locale: Locale }) {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="rounded-full bg-forest px-6 py-3 text-sm uppercase tracking-[0.16em] text-cream transition hover:bg-forest-mid disabled:opacity-60"
+        onClick={() => setStatus("sending")}
+        className="rounded-full bg-forest px-6 py-3 text-sm uppercase tracking-[0.16em] text-cream transition hover:bg-forest-mid disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "sending" ? (locale === "ar" ? "جاري الإرسال..." : locale === "ms" ? "Menghantar..." : "Sending...") : ui.sendMessage[locale]}
       </button>
