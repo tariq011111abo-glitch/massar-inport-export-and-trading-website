@@ -16,13 +16,10 @@ export async function sendContactNotification(formData: {
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       const nodemailer = await import("nodemailer");
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
+        host: process.env.SMTP_HOST || "smtp.titan.email",
+        port: Number(process.env.SMTP_PORT || 465),
+        secure: true,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
       });
       await transporter.sendMail({
         from: process.env.SMTP_FROM || contactEmail,
