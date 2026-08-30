@@ -12,24 +12,14 @@ export async function sendContactNotification(formData: {
   try {
     const [settings] = await db.select().from(siteSettings).limit(1);
     const contactEmail = "info@massartrading.com";
-    
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       const nodemailer = await import("nodemailer");
-      
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || "smtp.titan.email",
-        port: Number(process.env.SMTP_PORT || 587), // تم تعديل المنفذ الافتراضي إلى 587 المستقر في Vercel
-        secure: false, // يجب أن تكون false مع المنفذ 587 لتفعيل بروتوكول الأمان STARTTLS
-        auth: { 
-          user: process.env.SMTP_USER, 
-          pass: process.env.SMTP_PASS 
-        },
-        tls: {
-          ciphers: 'SSLv3',
-          rejectUnauthorized: false // يمنع خوادم Vercel الأمنية من حظر الاتصال بالبريد
-        }
+        port: Number(process.env.SMTP_PORT || 465),
+        secure: true,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
       });
-
       await transporter.sendMail({
         from: process.env.SMTP_FROM || contactEmail,
         to: contactEmail,
