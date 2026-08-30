@@ -72,7 +72,7 @@ export function ContactForm({ locale }: { locale: Locale }) {
         disabled={status === "sending"}
         className="rounded-full bg-forest px-6 py-3 text-sm uppercase tracking-[0.16em] text-cream transition hover:bg-forest-mid disabled:opacity-60"
       >
-        {ui.sendMessage[locale]}
+        {status === "sending" ? (locale === "ar" ? "جاري الإرسال..." : locale === "ms" ? "Menghantar..." : "Sending...") : ui.sendMessage[locale]}
       </button>
       {status === "error" ? (
         <p className="text-sm text-date">Unable to send. Please try WhatsApp or email.</p>
