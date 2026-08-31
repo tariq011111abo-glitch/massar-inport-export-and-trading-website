@@ -1,6 +1,5 @@
 import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
-import { eq } from "drizzle-orm";
 
 export async function sendContactNotification(formData: {
   name: string;
@@ -10,35 +9,41 @@ export async function sendContactNotification(formData: {
   locale?: string;
 }) {
   try {
-    const [settings] = await db.select().from(siteSettings).limit(1);
-    const contactEmail = settings?.email || "info@massartrading.com";
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
 
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      const nodemailer = await import("nodemailer");
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.titan.email",
-        port: Number(process.env.SMTP_PORT || 465),
-        secure: true,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      });
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || contactEmail,
-        to: contactEmail,
-        subject: `Massar Inquiry from ${formData.name}`,
-        text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
-      });
+    console.log("SMTP check:", {
+      hasHost: Boolean(host),
+      hasUser: Boolean(user),
+      hasPass: Boolean(pass),
+      host,
+    });
+
+    if (!host || !user || !pass) {
+      console.error("SMTP env vars missing on server");
+      return;
     }
 
-    const whatsappUrl = process.env.WHATSAPP_WEBHOOK_URL;
-    if (whatsappUrl) {
-      const whatsappMsg = `Massar Inquiry:\nName: ${formData.name}\nEmail: ${formData.email}\nMessage: ${formData.message}`;
-      await fetch(whatsappUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: settings?.whatsapp || "+60183220883", message: whatsappMsg }),
-      });
-    }
+    const nodemailer = await import("nodemailer");
+    const transporter = nodemailer.createTransport({
+      host,
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: true,
+      auth: { user, pass },
+    });
+
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || user,
+      to: "info@massartrading.com",
+      subject: `Massar Inquiry from ${formData.name}`,
+      text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
+    });
+
+    console.log("Email sent:", info.messageId);
   } catch (err: any) {
-    console.error("Notification error:", err.message || err);
+    console.error("Notification error:", err?.message || err);
+    if (err?.code) console.error("SMTP code:", err.code);
+    if (err?.response) console.error("SMTP response:", err.response);
   }
 }
