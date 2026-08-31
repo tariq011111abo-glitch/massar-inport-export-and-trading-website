@@ -1,5 +1,9 @@
 import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
+import { Resend } from "resend";
+
+// تهيئة مكتبة Resend تلقائياً باستخدام مفتاح الـ API
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendContactNotification(formData: {
   name: string;
@@ -9,50 +13,27 @@ export async function sendContactNotification(formData: {
   locale?: string;
 }) {
   try {
-    const host = process.env.SMTP_HOST;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    // تعديل: قمنا بجعل المنفذ الافتراضي 587 في حال لم يتم قراءته من المتغيرات البيئية
-    const port = Number(process.env.SMTP_PORT || 587);
-
-    console.log("SMTP check:", {
-      hasHost: Boolean(host),
-      hasUser: Boolean(user),
-      hasPass: Boolean(pass),
-      host,
-      port,
-    });
-
-    if (!host || !user || !pass) {
-      console.error("SMTP env vars missing on server");
+    // التحقق من وجود مفتاح الربط في السيرفر لمنع المشاكل
+    if (!process.env.RESEND_API_KEY) {
+      console.error("Critical Error: RESEND_API_KEY is missing on the server env variables.");
       return;
     }
 
-    const nodemailer = await import("nodemailer");
-    
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      // إصلاح: يكون true فقط إذا كان المنفذ 465 (SSL)، و false إذا كان المنفذ 587 (TLS)
-      secure: port === 465, 
-      auth: { user, pass },
-      // إضافة برمجية هامة: لتخطي حظر شهادات الأمان وجدران الحماية بين الاستضافة و GoDaddy
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || user,
-      to: "info@massartrading.com",
+    // إرسال الإيميل بشكل رسمي وفوري عبر بريد شركتك الموثق
+    const { data, error } = await resend.emails.send({
+      from: "Massar Trading <info@massartrading.com>", // الدومين الموثق الخاص بك
+      to: "info@massartrading.com", // الإيميل الذي يستقبل الاستفسارات
       subject: `Massar Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
 
-    console.log("Email sent successfully:", info.messageId);
+    if (error) {
+      console.error("Resend API failed to deliver email:", error);
+      return;
+    }
+
+    console.log("Email sent instantly via Resend! ID:", data?.id);
   } catch (err: any) {
-    console.error("Notification error:", err?.message || err);
-    if (err?.code) console.error("SMTP code:", err.code);
-    if (err?.response) console.error("SMTP response:", err.response);
+    console.error("Critical Resend wrapper crash:", err?.message || err);
   }
 }
