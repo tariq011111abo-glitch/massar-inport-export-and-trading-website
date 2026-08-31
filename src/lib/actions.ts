@@ -330,33 +330,46 @@ export async function submitInquiry(form: {
   if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
     throw new Error("Missing required fields");
   }
-  // Prevent duplicate rapid submissions from same contact within 60 seconds
+
+  // منع التكرار السريع خلال 60 ثانية من نفس الإيميل
   const recent = await db.select().from(inquiries)
     .where(eq(inquiries.email, form.email.trim()))
     .orderBy(desc(inquiries.createdAt))
     .limit(1);
+
   if (recent.length > 0) {
     const lastTime = recent[0].createdAt?.getTime?.() || 0;
     if (Date.now() - lastTime < 60000) {
-      return; // ignore duplicate
+      // تعديل هام: نرمي خطأ صريح بدلاً من التعليق الصامت حتى يفهم الفورم بوجود تكرار ويظهر للمستخدم
+      throw new Error("Duplicate submission. Please wait a minute.");
     }
   }
+
+  // إدخال البيانات في قاعدة البيانات
   await db.insert(inquiries).values({
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phone: form.phone?.trim() || null,
-      message: form.message.trim(),
-      locale: form.locale || "en",
-    });
-  // Fire-and-forget notification so form never hangs
+    name: form.name.trim(),
+    email: form.email.trim(),
+    phone: form.phone?.trim() || null,
+    message: form.message.trim(),
+    locale: form.locale || "en",
+  });
+
+  // إرسال الإيميل في الخلفية
   sendContactNotification({
     name: form.name.trim(),
     email: form.email.trim(),
     phone: form.phone?.trim(),
     message: form.message.trim(),
     locale: form.locale || "en",
-  }).catch(() => {});
+  }).catch((err) => {
+    console.error("Email notification failed:", err);
+  });
+
+  // تحديث مسارات الكاش في لوحة التحكم
   revalidatePath("/console/inquiries");
+  
+  // إرجاع قيمة نجاح صريحة للفورم ليتحول إلى "تم الإرسال"
+  return { success: true };
 }
 
 export async function deleteInquiry(id: number) {

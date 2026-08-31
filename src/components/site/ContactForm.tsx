@@ -9,6 +9,7 @@ export function ContactForm({ locale }: { locale: Locale }) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   async function onSubmit(formData: FormData) {
+    // نغير الحالة إلى جاري الإرسال هنا داخل الدالة وليس عند الضغط على الزر
     setStatus("sending");
     try {
       await submitInquiry({
@@ -19,7 +20,8 @@ export function ContactForm({ locale }: { locale: Locale }) {
         locale,
       });
       setStatus("sent");
-    } catch {
+    } catch (error) {
+      console.error("Submission error:", error);
       setStatus("error");
     }
   }
@@ -70,13 +72,22 @@ export function ContactForm({ locale }: { locale: Locale }) {
       <button
         type="submit"
         disabled={status === "sending"}
-        onClick={() => setStatus("sending")}
         className="rounded-full bg-forest px-6 py-3 text-sm uppercase tracking-[0.16em] text-cream transition hover:bg-forest-mid disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {status === "sending" ? (locale === "ar" ? "جاري الإرسال..." : locale === "ms" ? "Menghantar..." : "Sending...") : ui.sendMessage[locale]}
+        {status === "sending"
+          ? locale === "ar"
+            ? "جاري الإرسال..."
+            : locale === "ms"
+            ? "Menghantar..."
+            : "Sending..."
+          : ui.sendMessage[locale]}
       </button>
       {status === "error" ? (
-        <p className="text-sm text-date">Unable to send. Please try WhatsApp or email.</p>
+        <p className="text-sm text-date text-red-600">
+          {locale === "ar" 
+            ? "فشل الإرسال. يرجى المحاولة عبر الواتساب أو الإيميل." 
+            : "Unable to send. Please try WhatsApp or email."}
+        </p>
       ) : null}
     </form>
   );
