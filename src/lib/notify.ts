@@ -2,9 +2,6 @@ import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
 import { Resend } from "resend";
 
-// تهيئة مكتبة Resend تلقائياً باستخدام مفتاح الـ API
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function sendContactNotification(formData: {
   name: string;
   email: string;
@@ -13,11 +10,15 @@ export async function sendContactNotification(formData: {
   locale?: string;
 }) {
   try {
-    // التحقق من وجود مفتاح الربط في السيرفر لمنع المشاكل
-    if (!process.env.RESEND_API_KEY) {
+    const apiKey = process.env.RESEND_API_KEY;
+
+    if (!apiKey) {
       console.error("Critical Error: RESEND_API_KEY is missing on the server env variables.");
       return;
     }
+
+    // 🛠️ تم النقل هنا: تهيئة الحزمة داخل الدالة فقط عند الاستدعاء الفعلي لمنع فشل الـ Build
+    const resend = new Resend(apiKey);
 
     // إرسال الإيميل بشكل رسمي وفوري عبر بريد شركتك الموثق
     const { data, error } = await resend.emails.send({
