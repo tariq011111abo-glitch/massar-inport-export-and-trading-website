@@ -29,11 +29,10 @@ export async function sendContactNotification(formData: {
       console.error("Could not fetch logo from DB, using fallback:", dbErr);
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار الواردة إلى إيميل شركتك الرسمي
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار الواردة (نرسلها إلى بريدك الـ Gmail لتفادي حظر الارتداد الذاتي)
     const { data, error } = await resend.emails.send({
-      // تم إضافة علامات التنصيص المزدوجة هنا لحماية اسم الشركة من الرموز الخاصة وضمان الإرسال
       from: '"MASSAR IMPORT EXPORT TRADING SDN. BHD." <info@massartrading.com>', 
-      to: "info@massartrading.com", 
+      to: "tariq01877abohatem@gmail.com", // تذهب الاستفسارات لبريدك الشخصي بأمان وضمان
       replyTo: formData.email, 
       subject: `New Massar Website Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
@@ -46,7 +45,7 @@ export async function sendContactNotification(formData: {
 
     console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل للعميل
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل للعميل (Gmail)
     const currentLocale = formData.locale || "en";
     const isArabic = currentLocale === "ar";
     const isMalay = currentLocale === "ms";
@@ -62,7 +61,7 @@ export async function sendContactNotification(formData: {
         
         <div style="background-color: #1c2d24; padding: 30px; text-align: center; border-bottom: 3px solid #d4af37;">
           <img src="${logoUrl}" alt="MASSAR Logo" style="height: 70px; width: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #d4af37; background-color: #fcfbf7; padding: 2px;" />
-          <h1 style="color: #fcfbf7; font-size: 18px; font-weight: 600; margin: 15px 0 0 0; letter-spacing: 1px;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</h1>
+          <h1 style="color: #fcfbf7; font-size: 16px; font-weight: 600; margin: 15px 0 0 0; letter-spacing: 1px;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</h1>
         </div>
 
         <div style="padding: 40px 30px; color: #1c2d24; line-height: 1.7; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
@@ -116,7 +115,7 @@ export async function sendContactNotification(formData: {
       </div>
     `;
 
-    // إرسال الرد التلقائي الاحترافي الفاخر مع حماية اسم الشركة بعلامات التنصيص
+    // إرسال الرد التلقائي الفخم مع حماية الاسم الطويل
     const userReply = await resend.emails.send({
       from: '"MASSAR IMPORT EXPORT TRADING SDN. BHD." <info@massartrading.com>',
       to: formData.email, 
@@ -127,7 +126,7 @@ export async function sendContactNotification(formData: {
     if (userReply.error) {
       console.error("Resend API failed to deliver customer auto-reply:", userReply.error);
     } else {
-      console.log("Professional corporate auto-reply sent successfully! ID:", userReply.data?.id);
+      console.log("Professional corporate auto-reply sent successfully!");
     }
 
   } catch (err: any) {
