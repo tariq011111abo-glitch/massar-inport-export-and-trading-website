@@ -1,9 +1,19 @@
+استخدام في  التطبيق
+1- githup  tariq011111abo@gmail.coms
+2-github desktop-ايميل tariq011111abo@gmail.com
+3-vercel    ايميل tariq011111abo@gmail.com
+4-neon database----ايميلي الشخصي
+5-node js-
+6-resend email---ايميلي الشخصي
+
+
+
 تغير كلمه السر 
 1- الدخول الى  ملف البرنامج 
 2- فتح ترمنل 
 3- تحميل الحزم   كتابه الكود في ترمنل (npm install)
 4-  بعد الانتها   ادخل الكود الاتي في ترمنل حتى يظهر لك كود مشفر 
-)(node -e "const b=require('bcryptjs'); console.log(b.hashSync('NEW PAWWORD', 10));")
+(node -e "const b=require('bcryptjs'); console.log(b.hashSync('NEW PAWWORD', 10));")
 5-  انسخ الكود المشفر  من ترمنل 
 $2b$10$3HM3IYyJPj/CELEPWdh3Judtba01xWQcOkjWw9sjJWeNMe6aKintW
 6- الصق الكود في كود الداتا بيس
