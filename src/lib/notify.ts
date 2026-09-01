@@ -19,11 +19,12 @@ export async function sendContactNotification(formData: {
 
     const resend = new Resend(apiKey);
 
-    // 1️⃣ الإيميل الأول: يرسل تفاصيل الاستفسار إلى بريدك الـ Gmail الشخصي بدلاً من إيميل الشركة لتفادي الـ Bounce
+    // 1️⃣ الإيميل الأول: يرسل تفاصيل الاستفسار إلى إيميل شركتك الرسمي الموثق
+    // لمنع الـ Bounce، نقوم بإضافة سطر الـ replyTo الموجه للعميل، مما يسهل على خوادم البريد قبول الرسالة دون حظر ذاتي
     const { data, error } = await resend.emails.send({
-      from: "Massar Trading <info@massartrading.com>", // الإيميل الموثق في ريسند للارسال
-      to: "tariq01877abohatem@gmail.com", // 💡 تم التعديل هنا: نرسل الاستفسار إلى الـ Gmail الشخصي لتجاوز حظر الارتداد
-      replyTo: formData.email, 
+      from: "Massar Trading <info@massartrading.com>", 
+      to: "info@massartrading.com", // 💡 يعود هنا لإيميل شركتك الرسمي لتستقبل فيه الإستفسارات
+      replyTo: formData.email, // 💡 عند ضغطك على زر "رد" في إيميل الشركة، سيوجهك مباشرة لإيميل العميل (مثل qusai...)
       subject: `Massar Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
@@ -35,7 +36,7 @@ export async function sendContactNotification(formData: {
 
     console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر إلى بريد العميل (الزائر)
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر وينطلق برمجياً إلى بريد العميل الحقيقي الذي كتبه في الخانة
     const currentLocale = formData.locale || "en";
     
     const autoReplySubject = currentLocale === "ar" 
@@ -84,10 +85,10 @@ export async function sendContactNotification(formData: {
       `;
     }
 
-    // إطلاق الرد التلقائي فوراً لبريد العميل
+    // إطلاق الرد التلقائي لبريد العميل المستفسر الحقيقي (مثل qusai...)
     const userReply = await resend.emails.send({
       from: "Massar Trading <info@massartrading.com>",
-      to: formData.email, // بريد العميل المستفسر الحقيقي
+      to: formData.email, // 💡 تم التثبيت هنا: يرسل الرد التلقائي بشكل حتمي إلى بريد العميل المستفسر
       subject: autoReplySubject,
       html: autoReplyHtml,
     });
