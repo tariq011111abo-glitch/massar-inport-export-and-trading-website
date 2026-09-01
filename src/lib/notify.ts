@@ -19,8 +19,7 @@ export async function sendContactNotification(formData: {
 
     const resend = new Resend(apiKey);
 
-    // جلب شعار الشركة ديناميكياً من قاعدة البيانات، أو استخدام الشعار الرسمي المخزن على السيرفر
-    let logoUrl = "https://massartrading.com"; // 💡 يمكنك استبدال هذا الرابط بالرابط المباشر لشعارك إذا كان مختلفاً
+    let logoUrl = "https://massartrading.com"; 
     try {
       const settings = await db.select().from(siteSettings).limit(1);
       if (settings?.[0]?.logoUrl) {
@@ -32,8 +31,8 @@ export async function sendContactNotification(formData: {
 
     // 1️⃣ الإيميل الأول: تفاصيل الاستفسار الواردة إلى إيميل شركتك الرسمي
     const { data, error } = await resend.emails.send({
-      // تم تحديث اسم الشركة الكامل هنا بناءً على طلبك
-      from: "MASSAR IMPORT EXPORT TRADING SDN. BHD. <info@massartrading.com>", 
+      // تم إضافة علامات التنصيص المزدوجة هنا لحماية اسم الشركة من الرموز الخاصة وضمان الإرسال
+      from: '"MASSAR IMPORT EXPORT TRADING SDN. BHD." <info@massartrading.com>', 
       to: "info@massartrading.com", 
       replyTo: formData.email, 
       subject: `New Massar Website Inquiry from ${formData.name}`,
@@ -47,7 +46,7 @@ export async function sendContactNotification(formData: {
 
     console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي (بأسلوب الشركات العالمية الكبرى) المرسل للعميل
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل للعميل
     const currentLocale = formData.locale || "en";
     const isArabic = currentLocale === "ar";
     const isMalay = currentLocale === "ms";
@@ -58,17 +57,14 @@ export async function sendContactNotification(formData: {
         ? "Pengesahan Pertanyaan - Massar Trading"
         : "Inquiry Acknowledgment - MASSAR IMPORT EXPORT TRADING SDN. BHD.";
 
-    // بناء قالب الـ HTML البروفيشينال المتناسق مع ألوان مسار الفخمة (الأخضر الغامق والذهبي والبيج الخفيف)
     const autoReplyHtml = `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #fcfbf7; border-radius: 24px; border: 1px solid #d4af37; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
         
-        <!-- الهيدر العلوي ويحتوي على شعار الشركة فخم ومميز -->
         <div style="background-color: #1c2d24; padding: 30px; text-align: center; border-bottom: 3px solid #d4af37;">
-          <img src="${logoUrl}" alt="MASSAR Logo" style="height: 70px; width: 70px; border-radius: 50%; object-cover: cover; border: 2px solid #d4af37; background-color: #fcfbf7; padding: 2px;" />
-          <h1 style="color: #fcfbf7; font-size: 20px; font-weight: 600; margin: 15px 0 0 0; letter-spacing: 1px;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</h1>
+          <img src="${logoUrl}" alt="MASSAR Logo" style="height: 70px; width: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #d4af37; background-color: #fcfbf7; padding: 2px;" />
+          <h1 style="color: #fcfbf7; font-size: 18px; font-weight: 600; margin: 15px 0 0 0; letter-spacing: 1px;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</h1>
         </div>
 
-        <!-- محتوى الرسالة المدمج بتنسيق احترافي حسب لغة العميل -->
         <div style="padding: 40px 30px; color: #1c2d24; line-height: 1.7; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
           
           ${isArabic ? `
@@ -76,7 +72,6 @@ export async function sendContactNotification(formData: {
             <p style="font-size: 15px; color: #3f3f46;">نشكرك على تواصلك مع <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
             <p style="font-size: 15px; color: #3f3f46;">لقد استلمنا بريدك الإلكتروني بنجاح، ويقوم فريقنا حالياً بمراجعته والعمل عليه. سنقوم بالرد عليك في أقرب وقت ممكن، وعادة ما يكون ذلك خلال <strong>24 ساعة عمل</strong>.</p>
             
-            <!-- صندوق الاتصال العاجل والواتساب المطور بصرياً -->
             <div style="background-color: #f3f1e9; border-right: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
               <h3 style="margin-top: 0; color: #1c2d24; font-size: 16px;">هل استفسارك عاجل؟</h3>
               <p style="font-size: 14px; margin-bottom: 10px; color: #52525b;">يرجى عدم التردد في التواصل معنا مباشرة عبر الهاتف أو الواتساب على الأرقام التالية:</p>
@@ -84,7 +79,7 @@ export async function sendContactNotification(formData: {
               <p style="margin: 5px 0; font-weight: bold; color: #1c2d24;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
             </div>
           ` : isMalay ? `
-            <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">Hello ${formData.name}،</h2>
+            <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">Hello ${formData.name},</h2>
             <p style="font-size: 15px; color: #3f3f46;">Terima kasih kerana menghubungi <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
             <p style="font-size: 15px; color: #3f3f46;">Kami telah berjaya menerima e-mel anda, dan pasukan kami sedang menyemaknya. Kami akan maklum balas secepat mungkin, biasanya dalam tempoh <strong>24 jam perniagaan</strong>.</p>
             
@@ -107,7 +102,6 @@ export async function sendContactNotification(formData: {
             </div>
           `}
 
-          <!-- التوقيع الاحترافي النهائي بأسلوب كبرى الشركات -->
           <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
             <p style="margin: 0; font-size: 14px; font-weight: bold; color: #1c2d24;">Best regards,</p>
             <p style="margin: 4px 0 0 0; font-size: 13px; font-weight: 600; color: #d4af37;">Customer Support Team</p>
@@ -116,16 +110,15 @@ export async function sendContactNotification(formData: {
 
         </div>
 
-        <!-- الفوتر السفلي للحماية والخصوصية -->
-        <div style="background-color: #1c2d24; padding: 15px; text-align: center; border-top: 1px solid #white/[0.05];">
+        <div style="background-color: #1c2d24; padding: 15px; text-align: center;">
           <p style="margin: 0; font-size: 11px; color: #a1a1aa;">&copy; 2026 MASSAR. All rights reserved.</p>
         </div>
       </div>
     `;
 
-    // إرسال الرد التلقائي الاحترافي الفاخر إلى العميل مباشرة
+    // إرسال الرد التلقائي الاحترافي الفاخر مع حماية اسم الشركة بعلامات التنصيص
     const userReply = await resend.emails.send({
-      from: "MASSAR IMPORT EXPORT TRADING SDN. BHD. <info@massartrading.com>",
+      from: '"MASSAR IMPORT EXPORT TRADING SDN. BHD." <info@massartrading.com>',
       to: formData.email, 
       subject: autoReplySubject,
       html: autoReplyHtml,
