@@ -12,10 +12,12 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
 
   function switchTo(next: Locale) {
     const parts = pathname.split("/");
-    parts[1] = next; // تم التصحيح هنا ليعود التعديل على العنصر الأول داخل المصفوفة وليس المتغير نفسه
+    parts[1] = next; // التعديل الصحيح والمثالي: استبدال رمز اللغة فقط داخل المصفوفة بدون تخريب بقية الرابط
     const href = parts.join("/") || `/${next}`;
     document.cookie = `massar_locale=${next}; path=/; max-age=31536000`;
-    router.push(href);
+    
+    // يغير اللغة مع ثبات الشاشة في نفس مكانها الحالي بدون صعود للأعلى
+    router.push(href, { scroll: false });
     setIsOpen(false);
   }
 
