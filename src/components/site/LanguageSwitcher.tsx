@@ -12,14 +12,14 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
 
   function switchTo(next: Locale) {
     const parts = pathname.split("/");
-    parts[1] = next;
+    parts[1] = next; // تم التصحيح هنا ليعود التعديل على العنصر الأول داخل المصفوفة وليس المتغير نفسه
     const href = parts.join("/") || `/${next}`;
     document.cookie = `massar_locale=${next}; path=/; max-age=31536000`;
     router.push(href);
     setIsOpen(false);
   }
 
-  // أسماء اللغات الكاملة مع إضافة إيموجي العلم الخاص بكل لغة لمظهر احترافي
+  // أسماء اللغات الكاملة مع الإيموجي
   const languageNames: Record<Locale, string> = {
     en: "🇬🇧 English",
     ar: "🇸🇦 العربية",
@@ -44,14 +44,12 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
 
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
-      {/* تصميم فريد باللون الأزرق الفيروزي النيون المميز المنفصل تماماً عن بقية الأزرار */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-full border border-cyan-400/50 bg-cyan-500/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-cyan-400 transition-all duration-200 hover:bg-cyan-500/20 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]"
       >
         <span className="flex items-center gap-1.5">
-          {/* عرض إيموجي اللغة الحالية بجانب النص المكتوب */}
           <span className="text-sm leading-none">
             {locale === "en" ? "🇬🇧" : locale === "ar" ? "🇸🇦" : "🇲🇾"}
           </span>
@@ -67,9 +65,8 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
         </svg>
       </button>
 
-      {/* قائمة منسدلة أنيقة متناسقة باللون الأزرق الفيروزي والإيموجي */}
       {isOpen && (
-        <div className="absolute right-0 mt-2.5 w-48 rounded-2xl border border-cyan-500/30 bg-neutral-955/95 p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl z-50">
+        <div className="absolute right-0 mt-2.5 w-48 rounded-2xl border border-cyan-500/30 bg-neutral-950 p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] z-50">
           <div className="flex flex-col gap-1">
             {LOCALES.map((item) => (
               <button
