@@ -17,14 +17,13 @@ export async function sendContactNotification(formData: {
       return;
     }
 
-    // تهيئة حزمة Resend
     const resend = new Resend(apiKey);
 
-    // 1️⃣ الإيميل الأول: إرسال تفاصيل الاستفسار إلى إيميل شركتكinfo@massartrading.com
+    // 1️⃣ الإيميل الأول: يرسل تفاصيل الاستفسار إلى بريدك الـ Gmail الشخصي بدلاً من إيميل الشركة لتفادي الـ Bounce
     const { data, error } = await resend.emails.send({
-      from: "Massar Trading <info@massartrading.com>", 
-      to: "info@massartrading.com", 
-      replyTo: formData.email, // 💡 السطر السحري لتوجيه الرد التلقائي وحفظ الإيميل بالشكل الصحيح
+      from: "Massar Trading <info@massartrading.com>", // الإيميل الموثق في ريسند للارسال
+      to: "tariq01877abohatem@gmail.com", // 💡 تم التعديل هنا: نرسل الاستفسار إلى الـ Gmail الشخصي لتجاوز حظر الارتداد
+      replyTo: formData.email, 
       subject: `Massar Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
@@ -36,17 +35,15 @@ export async function sendContactNotification(formData: {
 
     console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر إلى بريد العميل الـ Gmail الشخصي
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر إلى بريد العميل (الزائر)
     const currentLocale = formData.locale || "en";
     
-    // تحديد عنوان الرسالة حسب لغة المتصفح
     const autoReplySubject = currentLocale === "ar" 
       ? "نشكرك على تواصلك مع مسار للتجارة" 
       : currentLocale === "ms"
         ? "Terima kasih kerana menghubungi Massar Trading"
         : "Thank you for contacting Massar Trading";
 
-    // صياغة نص الإيميل الترحيبي الاحترافي بكل لغة بالتوافق مع هوية موقعك الداكنة والأنيقة
     let autoReplyHtml = "";
 
     if (currentLocale === "ar") {
@@ -90,7 +87,7 @@ export async function sendContactNotification(formData: {
     // إطلاق الرد التلقائي فوراً لبريد العميل
     const userReply = await resend.emails.send({
       from: "Massar Trading <info@massartrading.com>",
-      to: formData.email, // بريد العميل الشخصي (مثل الـ Gmail الخاص بك في التجربة)
+      to: formData.email, // بريد العميل المستفسر الحقيقي
       subject: autoReplySubject,
       html: autoReplyHtml,
     });
@@ -98,7 +95,7 @@ export async function sendContactNotification(formData: {
     if (userReply.error) {
       console.error("Resend API failed to deliver customer auto-reply:", userReply.error);
     } else {
-      console.log("Customer auto-reply sent successfully to Gmail! ID:", userReply.data?.id);
+      console.log("Customer auto-reply sent successfully! ID:", userReply.data?.id);
     }
 
   } catch (err: any) {
