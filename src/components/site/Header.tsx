@@ -1,115 +1,110 @@
-"use client";
+import { Resend } from "resend";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
-import { t } from "@/lib/i18n";
-import type { Locale, NavItem, SiteSettings } from "@/lib/types";
-
-export function Header({
-  locale,
-  settings,
-  navItems,
-}: {
-  locale: Locale;
-  settings: SiteSettings;
-  navItems: NavItem[];
+export async function sendContactNotification(formData: {
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+  locale?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const name = t(settings.companyName, locale);
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
 
-  // دالة لمراقبة نزول المستخدم وتغيير حالة الخلفية فوراً
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
+    if (!apiKey) {
+      console.error("Critical Error: RESEND_API_KEY is missing on the server env variables.");
+      return;
+    }
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    const resend = new Resend(apiKey);
+    const logoUrl = "https://massartrading.com"; 
 
-  return (
-    // التعديل الذكي هنا: إذا نزل المستخدم لأسفل (isScrolled) تصبح الخلفية داكنة ومحمية بالتأثير الزجاجي، وإذا كان بالأعلى تظل مدمجة وخفيفة
-    <header 
-      className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-500 ${
-        isScrolled 
-          ? "bg-neutral-950/90 backdrop-blur-xl border-white/[0.08] py-3 shadow-lg" 
-          : "bg-black/10 backdrop-blur-sm border-transparent py-5"
-      }`}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 lg:px-8">
-        <Link href={`/${locale}`} className="flex items-center gap-3 text-cream shrink-0">
-          {settings.logoUrl ? (
-            <img
-              src={settings.logoUrl}
-              alt={name}
-              className="h-12 w-12 rounded-full border border-gold/40 object-cover"
-            />
-          ) : (
-            <span className="grid h-12 w-12 place-items-center rounded-full border border-gold/50 text-gold">
-              M
-            </span>
-          )}
-          <span className="leading-tight">
-            <span className="display block text-xl text-cream md:text-2xl font-medium tracking-wide">Massar</span>
-            <span className="hidden text-[9px] uppercase tracking-[0.22em] text-gold-soft sm:block mt-0.5">
-              Import · Export · Trading
-            </span>
-          </span>
-        </Link>
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار تصل لبريد الشركة ( info@massartrading.com )
+    try {
+      await resend.emails.send({
+        from: "Massar Trading <info@massartrading.com>", 
+        to: "info@massartrading.com", 
+        replyTo: formData.email, 
+        subject: `Massar Inquiry from ${formData.name}`,
+        text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
+      });
+      console.log("Inquiry notification delivered to company inbox.");
+    } catch (adminErr) {
+      console.error("Failed to send admin notification:", adminErr);
+    }
 
-        {/* تم تحسين الأزرار لتبديل تباينها تلقائياً عند نزول الشاشة */}
-        <nav className="hidden items-center gap-2 lg:flex">
-          {navItems.map((item) => (
-            <a
-              key={item.id}
-              href={`/${locale}${item.href.startsWith("#") ? item.href : item.href}`}
-              className={`rounded-full border px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.1em] transition duration-200 ${
-                isScrolled 
-                  ? "border-white/10 bg-white/[0.02] text-cream hover:border-gold/60 hover:bg-gold/10 hover:text-gold"
-                  : "border-cream/20 bg-black/20 text-cream hover:border-gold hover:bg-gold/20 hover:text-gold"
-              }`}
-            >
-              {t(item.label, locale)}
-            </a>
-          ))}
-        </nav>
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر (يصل للعميل بتنسيق HTML نظيف ومعتمد أمنياً)
+    try {
+      const currentLocale = formData.locale || "en";
+      const isArabic = currentLocale === "ar";
+      const isMalay = currentLocale === "ms";
+      
+      const autoReplySubject = isArabic 
+        ? "تأكيد استلام استفسارك - مسار للتجارة" 
+        : isMalay
+          ? "Pengesahan Pertanyaan - Massar Trading"
+          : "Inquiry Acknowledgment - Massar Trading";
 
-        <div className="flex items-center gap-3 shrink-0">
-          <LanguageSwitcher locale={locale} />
-          <button
-            type="button"
-            className="grid h-10 w-10 place-items-center rounded-full border border-gold/30 text-cream lg:hidden"
-            onClick={() => setOpen((value) => !value)}
-            aria-label="Menu"
-          >
-            <span className="block h-px w-4 bg-current" />
-            <span className="mt-1.5 block h-px w-4 bg-current" />
-          </button>
-        </div>
-      </div>
-
-      {open ? (
-        <div className="mx-5 mb-5 rounded-3xl border border-gold/20 bg-forest-deep/95 p-5 backdrop-blur lg:hidden">
-          <div className="flex flex-col gap-3">
-            {navItems.map((item) => (
-              <a
-                key={item.id}
-                href={`/${locale}${item.href.startsWith("#") ? item.href : item.href}`}
-                onClick={() => setOpen(false)}
-                className="border-b border-white/5 py-2 text-sm text-cream"
-              >
-                {t(item.label, locale)}
-              </a>
-            ))}
+      // قالب HTML خفيف وموثق لتجاوز فلاتر الـ Spam في Gmail فوراً وهبوطه في الـ Inbox
+      const autoReplyHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 25px; border: 1px solid #d4af37; border-radius: 16px; background-color: #fcfbf7; color: #1c2d24; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
+          
+          <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #d4af37;">
+            <img src="${logoUrl}" alt="MASSAR Logo" style="height: 65px; width: 65px; border-radius: 50%;" />
+            <h2 style="margin: 10px 0 0 0; font-size: 16px; color: #1c2d24; font-weight: bold;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</h2>
           </div>
+
+          ${isArabic ? `
+            <p style="font-size: 15px;">مرحباً <strong>${formData.name}</strong>،</p>
+            <p style="font-size: 14px; color: #3f3f46;">نشكرك على تواصلك مع مسار للاستيراد والتصدير والتجارة.</p>
+            <p style="font-size: 14px; color: #3f3f46;">لقد استلمنا بريدك الإلكتروني بنجاح، ويقوم فريقنا حالياً بمراجعته. سنقوم بالرد عليك في أقرب وقت ممكن، وعادة ما يكون ذلك خلال 24 ساعة عمل.</p>
+            
+            <div style="background-color: #f3f1e9; border-right: 4px solid #d4af37; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin-top: 0; font-weight: bold; font-size: 14px; color: #1c2d24;">هل استفسارك عاجل؟</p>
+              <p style="font-size: 13px; color: #52525b; margin-bottom: 8px;">يرجى عدم التردد في التواصل معنا مباشرة عبر الهاتف أو الواتساب على الأرقام التالية:</p>
+              <p style="margin: 4px 0; font-weight: bold;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 12-2717147</a></p>
+              <p style="margin: 4px 0; font-weight: bold;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 18-3220883</a></p>
+            </div>
+          ` : isMalay ? `
+            <p style="font-size: 15px;">Hello <strong>${formData.name}</strong>,</p>
+            <p style="font-size: 14px; color: #3f3f46;">Terima kasih kerana menghubungi MASSAR IMPORT EXPORT TRADING SDN. BHD.</p>
+            <p style="font-size: 14px; color: #3f3f46;">Kami telah berjaya menerima e-mel anda, dan pasukan kami sedang menyemaknya. Kami akan maklum balas secepat mungkin, biasanya dalam tempoh 24 jam perniagaan.</p>
+            
+            <div style="background-color: #f3f1e9; border-left: 4px solid #d4af37; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin-top: 0; font-weight: bold; font-size: 14px; color: #1c2d24;">Adakah pertanyaan anda mendesak?</p>
+              <p style="font-size: 13px; color: #52525b; margin-bottom: 8px;">Sila hubungi kami terus melalui Telefon atau WhatsApp di:</p>
+              <p style="margin: 4px 0; font-weight: bold;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 12-2717147</a></p>
+              <p style="margin: 4px 0; font-weight: bold;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 18-3220883</a></p>
+            </div>
+          ` : `
+            <p style="font-size: 15px;">Hello <strong>${formData.name}</strong>,</p>
+            <p style="font-size: 14px; color: #3f3f46;">Thank you for contacting <b>MASSAR IMPORT EXPORT TRADING SDN. BHD.</b></p>
+            <p style="font-size: 14px; color: #3f3f46;">We have successfully received your email, and our team is currently reviewing it. We will get back to you as soon as possible, usually within 24 business hours.</p>
+            
+            <div style="background-color: #f3f1e9; border-left: 4px solid #d4af37; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin-top: 0; font-weight: bold; font-size: 14px; color: #1c2d24;">If your inquiry is urgent, please feel free to reach out to us via Phone or WhatsApp at:</p>
+              <p style="margin: 6px 0 4px 0; font-weight: bold;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 12-2717147</a></p>
+              <p style="margin: 4px 0; font-weight: bold;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 18-3220883</a></p>
+            </div>
+          `}
+
+          <br />
+          <p style="margin-bottom: 0; font-size: 14px;">Best regards,</p>
+          <p style="margin-top: 5px; font-weight: bold; color: #d4af37; font-size: 14px;">Customer Support Team | MASSAR IMPORT EXPORT TRADING SDN. BHD.</p>
         </div>
-      ) : null}
-    </header>
-  );
+      `;
+
+      await resend.emails.send({
+        from: "Massar Trading <info@massartrading.com>", // استخدام الهوية الموثقة والمبسطة لضمان التسليم الفوري
+        to: formData.email, 
+        subject: autoReplySubject,
+        html: autoReplyHtml,
+      });
+      console.log("Customer clean HTML auto-reply sent.");
+    } catch (userErr) {
+      console.error("Failed to send customer auto-reply:", userErr);
+    }
+
+  } catch (err: any) {
+    console.error("Critical Resend wrapper crash:", err?.message || err);
+  }
 }
