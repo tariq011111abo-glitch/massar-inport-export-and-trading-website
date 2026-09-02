@@ -22,18 +22,18 @@ export async function sendContactNotification(formData: {
     let logoUrl = "https://massartrading.com"; 
     try {
       const settings = await db.select().from(siteSettings).limit(1);
-      if (settings && settings[0]?.logoUrl) {
-        logoUrl = settings[0].logoUrl;
+      if (settings && settings?.logoUrl) {
+        logoUrl = settings.logoUrl;
       }
     } catch (dbErr) {
       console.error("Could not fetch logo from DB, using fallback:", dbErr);
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تم توجيهها رسمياً لإيميل شركتكinfo@massartrading.com)
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تم توجيهها لبريدك الـ Gmail الشخصي لتجاوز حظر الارتداد الذاتي للاستضافة)
     const { data, error } = await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-      to: "info@massartrading.com", // 💡 تم التعديل هنا: لتعود وتستقبل الاستفسارات على إيميل الشركة الرسمي مباشرة
-      replyTo: formData.email, // 💡 يضمن لك لو ضغطت "رد" في إيميل الشركة أن ترسل للعميل فوراً
+      to: "tariq01877abohatem@gmail.com", // 💡 الحل السحري والأكيد: استقبل الاستفسارات هنا لتفادي الـ Bounce نهائياً
+      replyTo: formData.email, // 💡 بمجرد ضغطك على زر "رد" في الـ Gmail، سيوجهك مباشرة لمراسلة إيميل العميل الحقيقي
       subject: `New Massar Website Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
@@ -45,7 +45,7 @@ export async function sendContactNotification(formData: {
 
     console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل لبريد العميل الحقيقي (مثل الـ Gmail الشخصي للزائر)
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل للعميل (Gmail)
     const currentLocale = formData.locale || "en";
     const isArabic = currentLocale === "ar";
     const isMalay = currentLocale === "ms";
@@ -115,7 +115,6 @@ export async function sendContactNotification(formData: {
       </div>
     `;
 
-    // إرسال الرد التلقائي الاحترافي الفاخر مع حماية الاسم النظيف
     const userReply = await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
       to: formData.email, 
