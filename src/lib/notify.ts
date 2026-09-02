@@ -22,18 +22,18 @@ export async function sendContactNotification(formData: {
     let logoUrl = "https://massartrading.com"; 
     try {
       const settings = await db.select().from(siteSettings).limit(1);
-      if (settings && settings?.logoUrl) {
-        logoUrl = settings.logoUrl;
+      if (settings && settings.length > 0 && settings[0].logoUrl) {
+        logoUrl = settings[0].logoUrl;
       }
     } catch (dbErr) {
       console.error("Could not fetch logo from DB, using fallback:", dbErr);
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تم توجيهها لبريدك الـ Gmail الشخصي لتجاوز حظر الارتداد الذاتي للاستضافة)
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار إلى الـ Gmail الشخصي
     const { data, error } = await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-      to: "tariq01877abohatem@gmail.com", // 💡 الحل السحري والأكيد: استقبل الاستفسارات هنا لتفادي الـ Bounce نهائياً
-      replyTo: formData.email, // 💡 بمجرد ضغطك على زر "رد" في الـ Gmail، سيوجهك مباشرة لمراسلة إيميل العميل الحقيقي
+      to: "tariq01877abohatem@gmail.com", 
+      replyTo: formData.email, 
       subject: `New Massar Website Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
@@ -45,7 +45,7 @@ export async function sendContactNotification(formData: {
 
     console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل للعميل (Gmail)
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الفخم الموجه للعميل
     const currentLocale = formData.locale || "en";
     const isArabic = currentLocale === "ar";
     const isMalay = currentLocale === "ms";
