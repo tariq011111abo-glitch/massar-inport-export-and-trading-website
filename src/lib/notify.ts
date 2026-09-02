@@ -16,27 +16,37 @@ export async function sendContactNotification(formData: {
     }
 
     const resend = new Resend(apiKey);
-    
-    // 💡 تم التعديل: رابط الشعار الصحيح ليمتد إلى ملف الصورة مباشرة حتى يظهر داخل الإيميل
     const logoUrl = "https://massartrading.com"; 
 
-    // 1️⃣ الإيميل الأول: يرسل تفاصيل استفسار العميل إلى بريد الشركة الرسمي للاطلاع عليه
-    try {
-      await resend.emails.send({
-        from: "Massar Website <info@massartrading.com>", 
-        to: "info@massartrading.com", // 🎯 تم الإصلاح هنا: الاستفسار يصل الآن لبريد الشركة الرسمي مباشرة
-        replyTo: formData.email, // إذا ضغطت "رد" من بريد الشركة سيفتح مسودة لمراسلة العميل مباشرة
-        subject: `New Massar Website Inquiry from ${formData.name}`,
-        text: `You have received a new message:\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
-      });
-      console.log("Company notification email sent successfully.");
-    } catch (adminErr: any) {
-      console.error("Failed to send company notification:", adminErr?.message || adminErr);
+    // استخراج البيانات بوضوح في متغيرات ثابتة لمنع أي تداخل أو قراءة خاطئة
+    const clientName = String(formData.name || "Client").trim();
+    const clientEmail = String(formData.email || "").trim();
+    const clientPhone = String(formData.phone || "N/A").trim();
+    const clientMessage = String(formData.message || "").trim();
+    const currentLocale = String(formData.locale || "en").trim();
+
+    // إذا كان إيميل العميل فارغاً لأي سبب، نتوقف فوراً لمنع الأخطاء
+    if (!clientEmail) {
+      console.error("Error: Customer email is empty, skipping email sending.");
+      return;
     }
 
-    // 2️⃣ الإيميل الثاني: يرسل الرد التلقائي الاحترافي الفخم إلى بريد العميل (المستفسر)
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار تصل إليك أنت كمدير على بريدك الشخصي
     try {
-      const currentLocale = formData.locale || "en";
+      await resend.emails.send({
+        from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
+        to: "tariq01877abohatem@gmail.com", // 💡 حتمي: الاستفسار يصل لبريدك الشخصي لتطلع على رسالة العميل
+        replyTo: clientEmail, // عند الضغط على "رد" تفتح مسودة مباشرة لإيميل العميل
+        subject: `New Massar Website Inquiry from ${clientName}`,
+        text: `تفاصيل الاستفسار الجديد الوارد من الموقع:\n\nالاسم: ${clientName}\nالبريد الإلكتروني: ${clientEmail}\nالهاتف: ${clientPhone}\nالرسالة: ${clientMessage}\nاللغة: ${currentLocale}`,
+      });
+      console.log("Admin notification sent successfully to tariq01877abohatem@gmail.com");
+    } catch (adminErr: any) {
+      console.error("Failed to send admin notification:", adminErr?.message || adminErr);
+    }
+
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم يذهب مباشرة إلى بريد العميل الـ Gmail
+    try {
       const isArabic = currentLocale === "ar";
       const isMalay = currentLocale === "ms";
       
@@ -57,7 +67,7 @@ export async function sendContactNotification(formData: {
           <div style="padding: 40px 30px; color: #1c2d24; line-height: 1.7; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
             
             ${isArabic ? `
-              <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">مرحباً ${formData.name}،</h2>
+              <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">مرحباً ${clientName}،</h2>
               <p style="font-size: 15px; color: #3f3f46;">نشكرك على تواصلك مع <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
               <p style="font-size: 15px; color: #3f3f46;">لقد استلمنا بريدك الإلكتروني بنجاح، ويقوم فريقنا حالياً بمراجعته والعمل عليه. سنقوم بالرد عليك في أقرب وقت ممكن، وعادة ما يكون ذلك خلال <strong>24 ساعة عمل</strong>.</p>
               
@@ -68,7 +78,7 @@ export async function sendContactNotification(formData: {
                 <p style="margin: 5px 0; font-weight: bold; color: #1c2d24;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
               </div>
             ` : isMalay ? `
-              <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">Hello ${formData.name},</h2>
+              <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">Hello ${clientName},</h2>
               <p style="font-size: 15px; color: #3f3f46;">Terima kasih kerana menghubungi <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
               <p style="font-size: 15px; color: #3f3f46;">Kami telah berjaya menerima e-mel anda, dan pasukan kami sedang menyemaknya. Kami akan maklum balas secepat mungkin, biasanya dalam tempoh <strong>24 jam perniagaan</strong>.</p>
               
@@ -79,7 +89,7 @@ export async function sendContactNotification(formData: {
                 <p style="margin: 5px 0; font-weight: bold; color: #1c2d24;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
               </div>
             ` : `
-              <h2 style="color: #1c2d24; font-size: 21px; margin-top: 0; font-weight: 600;">Hello ${formData.name},</h2>
+              <h2 style="color: #1c2d24; font-size: 21px; margin-top: 0; font-weight: 600;">Hello ${clientName},</h2>
               <p style="font-size: 14px; color: #3f3f46;">Thank you for contacting <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
               <p style="font-size: 14px; color: #3f3f46;">We have successfully received your email, and our team is currently reviewing it. We will get back to you as soon as possible, usually within <strong>24 business hours</strong>.</p>
               
@@ -106,12 +116,12 @@ export async function sendContactNotification(formData: {
       `;
 
       await resend.emails.send({
-        from: "Massar Trading <info@massartrading.com>",
-        to: formData.email, // 🎯 العميل يستقبل الرد التلقائي هنا بنسبة 100%
+        from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
+        to: clientEmail, // 💡 حتمي: الرد التلقائي الفخم يذهب مباشرة لإيميل العميل (الزائر)
         subject: autoReplySubject,
         html: autoReplyHtml,
       });
-      console.log("Customer corporate auto-reply email sent successfully.");
+      console.log(`Auto-reply email sent successfully to customer: ${clientEmail}`);
     } catch (userErr: any) {
       console.error("Failed to send customer auto-reply:", userErr?.message || userErr);
     }
