@@ -1,3 +1,9 @@
+نفس الخطااااااااااااااااااااا
+هذا الكود كان شغال فقط اخبرتك
+تغير اسم الشركه 
+وتدمج الرساله التي يحتوي عليها الرد 
+import { db } from "@/db";
+import { siteSettings } from "@/db/schema";
 import { Resend } from "resend";
 
 export async function sendContactNotification(formData: {
@@ -16,114 +22,85 @@ export async function sendContactNotification(formData: {
     }
 
     const resend = new Resend(apiKey);
-    const logoUrl = "https://massartrading.com"; 
 
-    // استخراج البيانات بوضوح في متغيرات ثابتة لمنع أي تداخل أو قراءة خاطئة
-    const clientName = String(formData.name || "Client").trim();
-    const clientEmail = String(formData.email || "").trim();
-    const clientPhone = String(formData.phone || "N/A").trim();
-    const clientMessage = String(formData.message || "").trim();
-    const currentLocale = String(formData.locale || "en").trim();
+    // 1️⃣ الإيميل الأول: يرسل تفاصيل الاستفسار إلى إيميل شركتك الرسمي الموثق
+    // لمنع الـ Bounce، نقوم بإضافة سطر الـ replyTo الموجه للعميل، مما يسهل على خوادم البريد قبول الرسالة دون حظر ذاتي
+    const { data, error } = await resend.emails.send({
+      from: "Massar Trading <info@massartrading.com>", 
+      to: "info@massartrading.com", // 💡 يعود هنا لإيميل شركتك الرسمي لتستقبل فيه الإستفسارات
+      replyTo: formData.email, // 💡 عند ضغطك على زر "رد" في إيميل الشركة، سيوجهك مباشرة لإيميل العميل (مثل qusai...)
+      subject: `Massar Inquiry from ${formData.name}`,
+      text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
+    });
 
-    // إذا كان إيميل العميل فارغاً لأي سبب، نتوقف فوراً لمنع الأخطاء
-    if (!clientEmail) {
-      console.error("Error: Customer email is empty, skipping email sending.");
+    if (error) {
+      console.error("Resend API failed to deliver admin notification:", error);
       return;
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار تصل إليك أنت كمدير على بريدك الشخصي
-    try {
-      await resend.emails.send({
-        from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-        to: "tariq01877abohatem@gmail.com", // 💡 حتمي: الاستفسار يصل لبريدك الشخصي لتطلع على رسالة العميل
-        replyTo: clientEmail, // عند الضغط على "رد" تفتح مسودة مباشرة لإيميل العميل
-        subject: `New Massar Website Inquiry from ${clientName}`,
-        text: `تفاصيل الاستفسار الجديد الوارد من الموقع:\n\nالاسم: ${clientName}\nالبريد الإلكتروني: ${clientEmail}\nالهاتف: ${clientPhone}\nالرسالة: ${clientMessage}\nاللغة: ${currentLocale}`,
-      });
-      console.log("Admin notification sent successfully to tariq01877abohatem@gmail.com");
-    } catch (adminErr: any) {
-      console.error("Failed to send admin notification:", adminErr?.message || adminErr);
-    }
+    console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم يذهب مباشرة إلى بريد العميل الـ Gmail
-    try {
-      const isArabic = currentLocale === "ar";
-      const isMalay = currentLocale === "ms";
-      
-      const autoReplySubject = isArabic 
-        ? "تأكيد استلام استفسارك - مسار للتجارة" 
-        : isMalay
-          ? "Pengesahan Pertanyaan - Massar Trading"
-          : "Inquiry Acknowledgment - MASSAR IMPORT EXPORT TRADING SDN. BHD.";
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر وينطلق برمجياً إلى بريد العميل الحقيقي الذي كتبه في الخانة
+    const currentLocale = formData.locale || "en";
+    
+    const autoReplySubject = currentLocale === "ar" 
+      ? "نشكرك على تواصلك مع مسار للتجارة" 
+      : currentLocale === "ms"
+        ? "Terima kasih kerana menghubungi Massar Trading"
+        : "Thank you for contacting Massar Trading";
 
-      const autoReplyHtml = `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #fcfbf7; border-radius: 24px; border: 1px solid #d4af37; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-          
-          <div style="background-color: #1c2d24; padding: 30px; text-align: center; border-bottom: 3px solid #d4af37;">
-            <img src="${logoUrl}" alt="MASSAR Logo" style="height: 70px; width: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #d4af37; background-color: #fcfbf7; padding: 2px;" />
-            <h1 style="color: #fcfbf7; font-size: 16px; font-weight: 600; margin: 15px 0 0 0; letter-spacing: 1px;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</h1>
-          </div>
+    let autoReplyHtml = "";
 
-          <div style="padding: 40px 30px; color: #1c2d24; line-height: 1.7; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
-            
-            ${isArabic ? `
-              <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">مرحباً ${clientName}،</h2>
-              <p style="font-size: 15px; color: #3f3f46;">نشكرك على تواصلك مع <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
-              <p style="font-size: 15px; color: #3f3f46;">لقد استلمنا بريدك الإلكتروني بنجاح، ويقوم فريقنا حالياً بمراجعته والعمل عليه. سنقوم بالرد عليك في أقرب وقت ممكن، وعادة ما يكون ذلك خلال <strong>24 ساعة عمل</strong>.</p>
-              
-              <div style="background-color: #f3f1e9; border-right: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
-                <h3 style="margin-top: 0; color: #1c2d24; font-size: 16px;">هل استفسارك عاجل؟</h3>
-                <p style="font-size: 14px; margin-bottom: 10px; color: #52525b;">يرجى عدم التردد في التواصل معنا مباشرة عبر الهاتف أو الواتساب على الأرقام التالية:</p>
-                <p style="margin: 5px 0; font-weight: bold; color: #1c2d24;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 12-2717147</a></p>
-                <p style="margin: 5px 0; font-weight: bold; color: #1c2d24;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
-              </div>
-            ` : isMalay ? `
-              <h2 style="color: #1c2d24; font-size: 22px; margin-top: 0;">Hello ${clientName},</h2>
-              <p style="font-size: 15px; color: #3f3f46;">Terima kasih kerana menghubungi <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
-              <p style="font-size: 15px; color: #3f3f46;">Kami telah berjaya menerima e-mel anda, dan pasukan kami sedang menyemaknya. Kami akan maklum balas secepat mungkin, biasanya dalam tempoh <strong>24 jam perniagaan</strong>.</p>
-              
-              <div style="background-color: #f3f1e9; border-left: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
-                <h3 style="margin-top: 0; color: #1c2d24; font-size: 16px;">Adakah pertanyaan anda mendesak?</h3>
-                <p style="font-size: 14px; margin-bottom: 10px; color: #52525b;">Sila hubungi kami terus melalui Telefon atau WhatsApp di:</p>
-                <p style="margin: 5px 0; font-weight: bold; color: #1c2d24;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 12-2717147</a></p>
-                <p style="margin: 5px 0; font-weight: bold; color: #1c2d24;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
-              </div>
-            ` : `
-              <h2 style="color: #1c2d24; font-size: 21px; margin-top: 0; font-weight: 600;">Hello ${clientName},</h2>
-              <p style="font-size: 14px; color: #3f3f46;">Thank you for contacting <strong>MASSAR IMPORT EXPORT TRADING SDN. BHD.</strong></p>
-              <p style="font-size: 14px; color: #3f3f46;">We have successfully received your email, and our team is currently reviewing it. We will get back to you as soon as possible, usually within <strong>24 business hours</strong>.</p>
-              
-              <div style="background-color: #f3f1e9; border-left: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
-                <h3 style="margin-top: 0; color: #1c2d24; font-size: 15px; font-weight: 600;">If your inquiry is urgent:</h3>
-                <p style="font-size: 13px; margin-bottom: 10px; color: #52525b;">Please feel free to reach out to us via Phone or WhatsApp at:</p>
-                <p style="margin: 4px 0; font-weight: bold; color: #1c2d24; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 12-2717147</a></p>
-                <p style="margin: 4px 0; font-weight: bold; color: #1c2d24; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 18-3220883</a></p>
-              </div>
-            `}
-
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0; font-size: 14px; font-weight: bold; color: #1c2d24;">Best regards,</p>
-              <p style="margin: 4px 0 0 0; font-size: 13px; font-weight: 600; color: #d4af37;">Customer Support Team</p>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: #71717a; font-weight: 500;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</p>
-            </div>
-
-          </div>
-
-          <div style="background-color: #1c2d24; padding: 15px; text-align: center;">
-            <p style="margin: 0; font-size: 11px; color: #a1a1aa;">&copy; 2026 MASSAR. All rights reserved.</p>
-          </div>
+    if (currentLocale === "ar") {
+      autoReplyHtml = `
+        <div style="direction: rtl; font-family: sans-serif; padding: 20px; color: #1c2d24; background-color: #fcfbf7; border-radius: 16px; border: 1px solid #d4af37;">
+          <h2 style="color: #1c2d24;">مرحباً ${formData.name}،</h2>
+          <p>نشكرك على اهتمامك وتواصلك مع <strong>مسار للتجارة (Massar Trading)</strong>.</p>
+          <p>لقد استلمنا استفسارك بخصوص منتجاتنا بنجاح، ويقوم فريقنا حالياً بمراجعة تفاصيل رسالتك والعمل عليها.</p>
+          <p>سنقوم بالرد عليك والإجابة على كافة استفساراتك في أقرب وقت ممكن (خلال 24 ساعة).</p>
+          <br />
+          <hr style="border: 0; border-top: 1px solid #e5e7eb;" />
+          <p style="font-size: 12px; color: #71717a;">هذه رسالة تأكيد تلقائية من موقع مسار للتجارة، يرجى عدم الرد عليها مباشرة.</p>
         </div>
       `;
+    } else if (currentLocale === "ms") {
+      autoReplyHtml = `
+        <div style="font-family: sans-serif; padding: 20px; color: #1c2d24; background-color: #fcfbf7; border-radius: 16px; border: 1px solid #d4af37;">
+          <h2 style="color: #1c2d24;">Hello ${formData.name},</h2>
+          <p>Terima kasih kerana berminat dan menghubungi <strong>Massar Trading</strong>.</p>
+          <p>Kami telah berjaya menerima pertanyaan anda. Pasukan kami sedang menyemak mesej anda dengan teliti.</p>
+          <p>Kami akan maklum balas kepada anda secepat mungkin dalam tempoh 24 jam.</p>
+          <br />
+          <hr style="border: 0; border-top: 1px solid #e5e7eb;" />
+          <p style="font-size: 12px; color: #71717a;">Ini adalah e-mel pengesahan automatik daripada laman web Massar Trading, sila jangan balas e-mel ini.</p>
+        </div>
+      `;
+    } else {
+      autoReplyHtml = `
+        <div style="font-family: sans-serif; padding: 20px; color: #1c2d24; background-color: #fcfbf7; border-radius: 16px; border: 1px solid #d4af37;">
+          <h2 style="color: #1c2d24;">Hello ${formData.name},</h2>
+          <p>Thank you for your interest and contacting <strong>Massar Trading</strong>.</p>
+          <p>We have successfully received your inquiry regarding our products, and our team is currently reviewing your message.</p>
+          <p>We will get back to you with the details as soon as possible (within 24 hours).</p>
+          <br />
+          <hr style="border: 0; border-top: 1px solid #e5e7eb;" />
+          <p style="font-size: 12px; color: #71717a;">This is an automated confirmation email from Massar Trading website, please do not reply to this message directly.</p>
+        </div>
+      `;
+    }
 
-      await resend.emails.send({
-        from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
-        to: clientEmail, // 💡 حتمي: الرد التلقائي الفخم يذهب مباشرة لإيميل العميل (الزائر)
-        subject: autoReplySubject,
-        html: autoReplyHtml,
-      });
-      console.log(`Auto-reply email sent successfully to customer: ${clientEmail}`);
-    } catch (userErr: any) {
-      console.error("Failed to send customer auto-reply:", userErr?.message || userErr);
+    // إطلاق الرد التلقائي لبريد العميل المستفسر الحقيقي (مثل qusai...)
+    const userReply = await resend.emails.send({
+      from: "Massar Trading <info@massartrading.com>",
+      to: formData.email, // 💡 تم التثبيت هنا: يرسل الرد التلقائي بشكل حتمي إلى بريد العميل المستفسر
+      subject: autoReplySubject,
+      html: autoReplyHtml,
+    });
+
+    if (userReply.error) {
+      console.error("Resend API failed to deliver customer auto-reply:", userReply.error);
+    } else {
+      console.log("Customer auto-reply sent successfully! ID:", userReply.data?.id);
     }
 
   } catch (err: any) {
