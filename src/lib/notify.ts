@@ -42,7 +42,8 @@ export async function sendContactNotification(formData: {
       });
       console.log("Admin notification sent successfully to company email!");
     } catch (adminErr) {
-      console.error("Failed to send admin notification:", adminError);
+      // 💡 تم إصلاح المتغير هنا ليصبح adminErr تماماً كما هو معرّف في الـ catch وتختفي الخطوط الحمراء
+      console.error("Failed to send admin notification:", adminErr);
     }
 
     // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المدمج بنص رسالتك وشعارك ويصل للعميل
@@ -88,8 +89,8 @@ export async function sendContactNotification(formData: {
               <div style="background-color: #f3f1e9; border-left: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
                 <h3 style="margin-top: 0; color: #1c2d24; font-size: 15px;">Adakah pertanyaan anda mendesak?</h3>
                 <p style="font-size: 14px; margin-bottom: 10px; color: #52525b;">Sila hubungi kami terus melalui Telefon atau WhatsApp di:</p>
-                <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 12-2717147</a></p>
-                <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 18-3220883</a></p>
+                <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 12-2717147</a></p>
+                <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
               </div>
             ` : `
               <h2 style="color: #1c2d24; font-size: 20px; margin-top: 0; font-weight: 600;">Hello ${formData.name},</h2>
