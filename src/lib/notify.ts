@@ -16,15 +16,13 @@ export async function sendContactNotification(formData: {
     }
 
     const resend = new Resend(apiKey);
-    
-    // وضع رابط شعار موقعك الرسمي المباشر بشكل ثابت لمنع أي خطأ برمي في جلب البيانات
     const logoUrl = "https://massartrading.com"; 
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تذهب لبريدك الـ Gmail الشخصي لتفادي حظر الـ Bounce من استضافة الشركة)
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تمت إعادتها رسمياً لتصل إلى إيميل شركتك)
     const adminReply = await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-      to: "tariq01877abohatem@gmail.com", 
-      replyTo: formData.email, 
+      to: "info@massartrading.com", // 💡 تم التعديل هنا: لتعود الاستفسارات إلى إيميل الشركة الرسمي مباشرة بناءً على طلبك
+      replyTo: formData.email, // يضمن لك عند ضغط "رد" داخل بريد الشركة أن تراسل العميل فوراً
       subject: `Massar Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
@@ -32,10 +30,10 @@ export async function sendContactNotification(formData: {
     if (adminReply.error) {
       console.error("Resend API failed to deliver admin notification:", adminReply.error);
     } else {
-      console.log("Admin notification sent successfully!");
+      console.log("Admin notification sent successfully to company email!");
     }
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المدمج بنص رسالتك وشعارك ويصل للعميل
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم الموجه لبريد العميل (الزائر)
     const currentLocale = formData.locale || "en";
     const isArabic = currentLocale === "ar";
     const isMalay = currentLocale === "ms";
@@ -74,7 +72,7 @@ export async function sendContactNotification(formData: {
             
             <div style="background-color: #f3f1e9; border-left: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
               <h3 style="margin-top: 0; color: #1c2d24; font-size: 15px;">Adakah pertanyaan anda mendesak?</h3>
-              <p style="font-size: 13px; margin-bottom: 10px; color: #52525b;">Sila hubungi kami terus melalui Telefon atau WhatsApp di:</p>
+              <p style="font-size: 14px; margin-bottom: 10px; color: #52525b;">Sila hubungi kami terus melalui Telefon atau WhatsApp di:</p>
               <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 12-2717147</a></p>
               <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
             </div>
@@ -104,18 +102,14 @@ export async function sendContactNotification(formData: {
       </div>
     `;
 
-    const userReply = await resend.emails.send({
+    await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
       to: formData.email, 
       subject: autoReplySubject,
       html: autoReplyHtml,
     });
 
-    if (userReply.error) {
-      console.error("Resend API failed to deliver customer auto-reply:", userReply.error);
-    } else {
-      console.log("Customer auto-reply sent successfully!");
-    }
+    console.log("Customer auto-reply sent successfully!");
 
   } catch (err: any) {
     console.error("Critical Resend wrapper crash:", err?.message || err);
