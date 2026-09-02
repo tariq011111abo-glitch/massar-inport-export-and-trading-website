@@ -1,5 +1,3 @@
-import { db } from "@/db";
-import { siteSettings } from "@/db/schema";
 import { Resend } from "resend";
 
 export async function sendContactNotification(formData: {
@@ -18,32 +16,24 @@ export async function sendContactNotification(formData: {
     }
 
     const resend = new Resend(apiKey);
+    
+    // وضع رابط شعار موقعك الرسمي المباشر بشكل ثابت لمنع أي خطأ برمي في جلب البيانات
+    const logoUrl = "https://massartrading.com"; 
 
-    let logoUrl = "https://massartrading.com"; 
-    try {
-      const settings = await db.select().from(siteSettings).limit(1);
-      if (settings && settings?.logoUrl) {
-        logoUrl = settings.logoUrl;
-      }
-    } catch (dbErr) {
-      console.error("Could not fetch logo from DB, using fallback:", dbErr);
-    }
-
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تذهب لبريدك الـ Gmail الشخصي لكسر الحظر الأمني ومنع الـ Bounce)
-    const { data, error } = await resend.emails.send({
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تذهب لبريدك الـ Gmail الشخصي لتفادي حظر الـ Bounce من استضافة الشركة)
+    const adminReply = await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-      to: "tariq01877abohatem@gmail.com", // 💡 التعديل السحري والأكيد لتستلم الاستفسارات بنجاح بدون ارتداد أحمر
+      to: "tariq01877abohatem@gmail.com", 
       replyTo: formData.email, 
       subject: `Massar Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
 
-    if (error) {
-      console.error("Resend API failed to deliver admin notification:", error);
-      return;
+    if (adminReply.error) {
+      console.error("Resend API failed to deliver admin notification:", adminReply.error);
+    } else {
+      console.log("Admin notification sent successfully!");
     }
-
-    console.log("Admin notification sent via Resend! ID:", data?.id);
 
     // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المدمج بنص رسالتك وشعارك ويصل للعميل
     const currentLocale = formData.locale || "en";
@@ -74,8 +64,8 @@ export async function sendContactNotification(formData: {
             <div style="background-color: #f3f1e9; border-right: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
               <h3 style="margin-top: 0; color: #1c2d24; font-size: 15px;">هل استفسارك عاجل؟</h3>
               <p style="font-size: 13px; margin-bottom: 10px; color: #52525b;">يرجى عدم التردد في التواصل معنا مباشرة عبر الهاتف أو الواتساب على الأرقام التالية:</p>
-              <p style="margin: 5px 0; font-weight: bold; font-size: 15px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 12-2717147</a></p>
-              <p style="margin: 5px 0; font-weight: bold; font-size: 15px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 18-3220883</a></p>
+              <p style="margin: 5px 0; font-weight: bold; font-size: 15px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 12-2717147</a></p>
+              <p style="margin: 5px 0; font-weight: bold; font-size: 15px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
             </div>
           ` : isMalay ? `
             <h2 style="color: #1c2d24; font-size: 20px; margin-top: 0;">Hello ${formData.name},</h2>
@@ -85,8 +75,8 @@ export async function sendContactNotification(formData: {
             <div style="background-color: #f3f1e9; border-left: 4px solid #d4af37; padding: 20px; border-radius: 12px; margin: 25px 0;">
               <h3 style="margin-top: 0; color: #1c2d24; font-size: 15px;">Adakah pertanyaan anda mendesak?</h3>
               <p style="font-size: 13px; margin-bottom: 10px; color: #52525b;">Sila hubungi kami terus melalui Telefon atau WhatsApp di:</p>
-              <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 12-2717147</a></p>
-              <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">🟢 +60 18-3220883</a></p>
+              <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 12-2717147</a></p>
+              <p style="margin: 5px 0; font-weight: bold; font-size: 14px;"><a href="https://wa.me" style="color: #1c2d24; text-decoration: none;">📞 +60 18-3220883</a></p>
             </div>
           ` : `
             <h2 style="color: #1c2d24; font-size: 20px; margin-top: 0; font-weight: 600;">Hello ${formData.name},</h2>
