@@ -1,7 +1,3 @@
-نفس الخطااااااااااااااااااااا
-هذا الكود كان شغال فقط اخبرتك
-تغير اسم الشركه 
-وتدمج الرساله التي يحتوي عليها الرد 
 import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
 import { Resend } from "resend";
