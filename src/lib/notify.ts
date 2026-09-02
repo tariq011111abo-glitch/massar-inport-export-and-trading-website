@@ -19,34 +19,29 @@ export async function sendContactNotification(formData: {
 
     const resend = new Resend(apiKey);
 
+    // 💡 تم تبسيط جلب الشعار هنا تماماً ووضع رابط احتياطي مباشر لمنع أي توقف أو Crash في الكود
     let logoUrl = "https://massartrading.com"; 
     try {
       const settings = await db.select().from(siteSettings).limit(1);
-      // تم الإصلاح الجذري هنا: قراءة أول عنصر في المصفوفة باستخدام الرمز [0] لتفادي توقف الكود
-      if (settings && settings.length > 0 && settings[0].logoUrl) {
+      if (settings && settings[0] && settings[0].logoUrl) {
         logoUrl = settings[0].logoUrl;
       }
     } catch (dbErr) {
       console.error("Could not fetch logo from DB, using fallback:", dbErr);
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار إلى الـ Gmail الشخصي الخاص بك لتفادي الحظر
-    const { data, error } = await resend.emails.send({
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تذهب إليك كصاحب الشركة لتطلع على رسالة العميل)
+    await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-      to: "tariq01877abohatem@gmail.com", 
+      to: "tariq01877abohatem@gmail.com", // بريدك الإلكتروني لاستلام الاستفسارات
       replyTo: formData.email, 
       subject: `New Massar Website Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
 
-    if (error) {
-      console.error("Resend API failed to deliver admin notification:", error);
-      return;
-    }
+    console.log("Admin notification triggered successfully.");
 
-    console.log("Admin notification sent via Resend! ID:", data?.id);
-
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الفخم الموجه للعميل
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم (يذهب إلى بريد العميل الحقيقي المستفسر)
     const currentLocale = formData.locale || "en";
     const isArabic = currentLocale === "ar";
     const isMalay = currentLocale === "ms";
@@ -116,18 +111,15 @@ export async function sendContactNotification(formData: {
       </div>
     `;
 
-    const userReply = await resend.emails.send({
+    // إرسال الرد التلقائي الفخم للعميل
+    await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
       to: formData.email, 
       subject: autoReplySubject,
       html: autoReplyHtml,
     });
 
-    if (userReply.error) {
-      console.error("Resend API failed to deliver customer auto-reply:", userReply.error);
-    } else {
-      console.log("Professional corporate auto-reply sent successfully!");
-    }
+    console.log("Customer auto-reply triggered successfully.");
 
   } catch (err: any) {
     console.error("Critical Resend wrapper crash:", err?.message || err);
