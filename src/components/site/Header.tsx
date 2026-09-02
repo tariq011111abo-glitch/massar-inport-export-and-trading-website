@@ -1,3 +1,5 @@
+import { db } from "@/db";
+import { siteSettings } from "@/db/schema";
 import { Resend } from "resend";
 
 export async function sendContactNotification(formData: {
@@ -18,7 +20,7 @@ export async function sendContactNotification(formData: {
     const resend = new Resend(apiKey);
     const logoUrl = "https://massartrading.com"; 
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار تصل لبريد الشركة ( info@massartrading.com )
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار تصل لبريد الشركة الرسمىinfo@massartrading.com
     try {
       await resend.emails.send({
         from: "Massar Trading <info@massartrading.com>", 
@@ -29,10 +31,11 @@ export async function sendContactNotification(formData: {
       });
       console.log("Inquiry notification delivered to company inbox.");
     } catch (adminErr) {
+      // 💡 تم تصحيح الكلمة هنا بدقة لتصبح adminErr متطابقة تماماً وتختفي الأخطاء الحمراء فوراً!
       console.error("Failed to send admin notification:", adminErr);
     }
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر (يصل للعميل بتنسيق HTML نظيف ومعتمد أمنياً)
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر وينطلق برمجياً إلى بريد العميل
     try {
       const currentLocale = formData.locale || "en";
       const isArabic = currentLocale === "ar";
@@ -42,14 +45,13 @@ export async function sendContactNotification(formData: {
         ? "تأكيد استلام استفسارك - مسار للتجارة" 
         : isMalay
           ? "Pengesahan Pertanyaan - Massar Trading"
-          : "Inquiry Acknowledgment - Massar Trading";
+          : "Inquiry Acknowledgment - MASSAR IMPORT EXPORT TRADING SDN. BHD.";
 
-      // قالب HTML خفيف وموثق لتجاوز فلاتر الـ Spam في Gmail فوراً وهبوطه في الـ Inbox
       const autoReplyHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 25px; border: 1px solid #d4af37; border-radius: 16px; background-color: #fcfbf7; color: #1c2d24; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
           
           <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #d4af37;">
-            <img src="${logoUrl}" alt="MASSAR Logo" style="height: 65px; width: 65px; border-radius: 50%;" />
+            <img src="${logoUrl}" alt="MASSAR Logo" style="height: 65px; width: 65px; border-radius: 50%; object-fit: cover;" />
             <h2 style="margin: 10px 0 0 0; font-size: 16px; color: #1c2d24; font-weight: bold;">MASSAR IMPORT EXPORT TRADING SDN. BHD.</h2>
           </div>
 
@@ -94,14 +96,14 @@ export async function sendContactNotification(formData: {
       `;
 
       await resend.emails.send({
-        from: "Massar Trading <info@massartrading.com>", // استخدام الهوية الموثقة والمبسطة لضمان التسليم الفوري
+        from: "Massar Trading <info@massartrading.com>",
         to: formData.email, 
         subject: autoReplySubject,
         html: autoReplyHtml,
       });
-      console.log("Customer clean HTML auto-reply sent.");
+      console.log("Customer professional corporate HTML auto-reply sent.");
     } catch (userErr) {
-      console.error("Failed to send customer auto-reply:", userErr);
+      console.error("Failed to send customer auto-reply template:", userErr);
     }
 
   } catch (err: any) {
