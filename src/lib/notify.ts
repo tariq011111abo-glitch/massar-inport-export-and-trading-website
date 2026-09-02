@@ -22,6 +22,7 @@ export async function sendContactNotification(formData: {
     let logoUrl = "https://massartrading.com"; 
     try {
       const settings = await db.select().from(siteSettings).limit(1);
+      // تم الإصلاح الجذري هنا: قراءة أول عنصر في المصفوفة باستخدام الرمز [0] لتفادي توقف الكود
       if (settings && settings.length > 0 && settings[0].logoUrl) {
         logoUrl = settings[0].logoUrl;
       }
@@ -29,7 +30,7 @@ export async function sendContactNotification(formData: {
       console.error("Could not fetch logo from DB, using fallback:", dbErr);
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار إلى الـ Gmail الشخصي
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار إلى الـ Gmail الشخصي الخاص بك لتفادي الحظر
     const { data, error } = await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
       to: "tariq01877abohatem@gmail.com", 
