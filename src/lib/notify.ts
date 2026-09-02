@@ -29,12 +29,11 @@ export async function sendContactNotification(formData: {
       console.error("Could not fetch logo from DB, using fallback:", dbErr);
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار الواردة (تذهب إلى بريدك الـ Gmail لتفادي حظر الارتداد)
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار (تم توجيهها رسمياً لإيميل شركتكinfo@massartrading.com)
     const { data, error } = await resend.emails.send({
-      // 💡 تم تبسيط الاسم هنا بحذف النقاط لضمان موافقة سيرفر Resend الفورية على تمرير الإيميل
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-      to: "tariq01877abohatem@gmail.com", 
-      replyTo: formData.email, 
+      to: "info@massartrading.com", // 💡 تم التعديل هنا: لتعود وتستقبل الاستفسارات على إيميل الشركة الرسمي مباشرة
+      replyTo: formData.email, // 💡 يضمن لك لو ضغطت "رد" في إيميل الشركة أن ترسل للعميل فوراً
       subject: `New Massar Website Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
@@ -46,7 +45,7 @@ export async function sendContactNotification(formData: {
 
     console.log("Admin notification sent via Resend! ID:", data?.id);
 
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل للعميل (Gmail)
+    // 2️⃣ الإيميل الثاني: الرد التلقائي الاحترافي الفخم المرسل لبريد العميل الحقيقي (مثل الـ Gmail الشخصي للزائر)
     const currentLocale = formData.locale || "en";
     const isArabic = currentLocale === "ar";
     const isMalay = currentLocale === "ms";
@@ -116,7 +115,7 @@ export async function sendContactNotification(formData: {
       </div>
     `;
 
-    // 💡 تم تبسيط الاسم هنا أيضاً لحماية الرد التلقائي وضمان تسليمه للعميل
+    // إرسال الرد التلقائي الاحترافي الفاخر مع حماية الاسم النظيف
     const userReply = await resend.emails.send({
       from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
       to: formData.email, 
