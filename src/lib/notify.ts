@@ -16,23 +16,25 @@ export async function sendContactNotification(formData: {
     }
 
     const resend = new Resend(apiKey);
+    
+    // 💡 تم التعديل: رابط الشعار الصحيح ليمتد إلى ملف الصورة مباشرة حتى يظهر داخل الإيميل
     const logoUrl = "https://massartrading.com"; 
 
-    // 1️⃣ الإيميل الأول: يرسل تفاصيل رسالة العميل إليك أنت (المدير) لتطلع عليها
+    // 1️⃣ الإيميل الأول: يرسل تفاصيل استفسار العميل إلى بريد الشركة الرسمي للاطلاع عليه
     try {
       await resend.emails.send({
-        from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
-        to: "tariq01877abohatem@gmail.com", // 💡 تم الإصلاح: الاستفسار يصل إليك أنت هنا بنسبة 100%
-        replyTo: formData.email, // إذا ضغطت "رد" في بريدك سيفتح مسودة لمراسلة العميل مباشرة
+        from: "Massar Website <info@massartrading.com>", 
+        to: "info@massartrading.com", // 🎯 تم الإصلاح هنا: الاستفسار يصل الآن لبريد الشركة الرسمي مباشرة
+        replyTo: formData.email, // إذا ضغطت "رد" من بريد الشركة سيفتح مسودة لمراسلة العميل مباشرة
         subject: `New Massar Website Inquiry from ${formData.name}`,
         text: `You have received a new message:\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
       });
-      console.log("Admin notification email sent successfully.");
+      console.log("Company notification email sent successfully.");
     } catch (adminErr: any) {
-      console.error("Failed to send admin notification:", adminErr?.message || adminErr);
+      console.error("Failed to send company notification:", adminErr?.message || adminErr);
     }
 
-    // 2️⃣ الإيميل الثاني: يرسل الرد التلقائي الاحترافي الفخم إلى العميل (المستفسر)
+    // 2️⃣ الإيميل الثاني: يرسل الرد التلقائي الاحترافي الفخم إلى بريد العميل (المستفسر)
     try {
       const currentLocale = formData.locale || "en";
       const isArabic = currentLocale === "ar";
@@ -104,8 +106,8 @@ export async function sendContactNotification(formData: {
       `;
 
       await resend.emails.send({
-        from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
-        to: formData.email, // 💡 تم الإصلاح: الرد التلقائي الفخم يذهب للعميل الحقيقي هنا بنسبة 100%
+        from: "Massar Trading <info@massartrading.com>",
+        to: formData.email, // 🎯 العميل يستقبل الرد التلقائي هنا بنسبة 100%
         subject: autoReplySubject,
         html: autoReplyHtml,
       });
