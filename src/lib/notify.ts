@@ -22,17 +22,18 @@ export async function sendContactNotification(formData: {
     let logoUrl = "https://massartrading.com"; 
     try {
       const settings = await db.select().from(siteSettings).limit(1);
-      if (settings?.[0]?.logoUrl) {
+      if (settings && settings[0]?.logoUrl) {
         logoUrl = settings[0].logoUrl;
       }
     } catch (dbErr) {
       console.error("Could not fetch logo from DB, using fallback:", dbErr);
     }
 
-    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار الواردة (نرسلها إلى بريدك الـ Gmail لتفادي حظر الارتداد الذاتي)
+    // 1️⃣ الإيميل الأول: تفاصيل الاستفسار الواردة (تذهب إلى بريدك الـ Gmail لتفادي حظر الارتداد)
     const { data, error } = await resend.emails.send({
-      from: '"MASSAR IMPORT EXPORT TRADING SDN. BHD." <info@massartrading.com>', 
-      to: "tariq01877abohatem@gmail.com", // تذهب الاستفسارات لبريدك الشخصي بأمان وضمان
+      // 💡 تم تبسيط الاسم هنا بحذف النقاط لضمان موافقة سيرفر Resend الفورية على تمرير الإيميل
+      from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>", 
+      to: "tariq01877abohatem@gmail.com", 
       replyTo: formData.email, 
       subject: `New Massar Website Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
@@ -115,9 +116,9 @@ export async function sendContactNotification(formData: {
       </div>
     `;
 
-    // إرسال الرد التلقائي الفخم مع حماية الاسم الطويل
+    // 💡 تم تبسيط الاسم هنا أيضاً لحماية الرد التلقائي وضمان تسليمه للعميل
     const userReply = await resend.emails.send({
-      from: '"MASSAR IMPORT EXPORT TRADING SDN. BHD." <info@massartrading.com>',
+      from: "MASSAR IMPORT EXPORT TRADING <info@massartrading.com>",
       to: formData.email, 
       subject: autoReplySubject,
       html: autoReplyHtml,
