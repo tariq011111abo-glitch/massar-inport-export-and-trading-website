@@ -18,27 +18,12 @@ export async function sendContactNotification(formData: {
     }
 
     const resend = new Resend(apiKey);
-
-    // 1️⃣ الإيميل الأول: يرسل تفاصيل الاستفسار إلى إيميل شركتك الرسمي الموثق
-    // تم تغيير المرسل إلى system@ لمنع الحظر الذاتي والـ Bounce من خوادم GoDaddy
-    const { data, error } = await resend.emails.send({
-      from: "Massar Import Export Trading <system@massartrading.com>", 
-      to: "info@massartrading.com", 
-      replyTo: formData.email, // عند ضغطك على زر "رد" في إيميل الشركة، سيوجهك مباشرة لإيميل العميل
-      subject: `Massar Inquiry from ${formData.name}`,
-      text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
-    });
-
-    if (error) {
-      console.error("Resend API failed to deliver admin notification:", error);
-      return;
-    }
-
-    console.log("Admin notification sent via Resend! ID:", data?.id);
-
-    // 2️⃣ الإيميل الثاني: الرد التلقائي الفوري والمباشر وينطلق برمجياً إلى بريد العميل الحقيقي
     const currentLocale = formData.locale || "en";
-    
+
+    // ==========================================
+    // 1️⃣ أولاً: إرسال الرد التلقائي فوراً لبريد العميل (المستفسر الحقيقي)
+    // جعلناه في البداية حتى يضمن العميل استلام رسالته دون تتبع أخطاء سيرفر الشركة
+    // ==========================================
     const autoReplySubject = currentLocale === "ar" 
       ? "نشكرك على تواصلك مع مسار للاستيراد والتصدير والتجارة" 
       : currentLocale === "ms"
@@ -85,7 +70,6 @@ export async function sendContactNotification(formData: {
       `;
     }
 
-    // إطلاق الرد التلقائي لبريد العميل المستفسر الحقيقي
     const userReply = await resend.emails.send({
       from: "Massar Import Export Trading <info@massartrading.com>",
       to: formData.email, 
@@ -97,6 +81,24 @@ export async function sendContactNotification(formData: {
       console.error("Resend API failed to deliver customer auto-reply:", userReply.error);
     } else {
       console.log("Customer auto-reply sent successfully! ID:", userReply.data?.id);
+    }
+
+    // ==========================================
+    // 2️⃣ ثانياً: إرسال تفاصيل الاستفسار إلى إيميل شركتك الرسمي
+    // حتى لو حدث Bounce هنا، لن يؤثر على الرد التلقائي لأنه تم إرساله بالفعل بالأعلى
+    // ==========================================
+    const adminReply = await resend.emails.send({
+      from: "Massar System <system@massartrading.com>", 
+      to: "info@massartrading.com", 
+      replyTo: formData.email, 
+      subject: `Massar Inquiry from ${formData.name}`,
+      text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
+    });
+
+    if (adminReply.error) {
+      console.error("Resend API failed to deliver admin notification:", adminReply.error);
+    } else {
+      console.log("Admin notification processed! ID:", adminReply.data?.id);
     }
 
   } catch (err: any) {
