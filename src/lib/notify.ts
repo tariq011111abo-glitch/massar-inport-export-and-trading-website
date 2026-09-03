@@ -22,7 +22,7 @@ export async function sendContactNotification(formData: {
 
     // ==========================================
     // 1️⃣ أولاً: إرسال الرد التلقائي فوراً لبريد العميل (المستفسر الحقيقي)
-    // جعلناه في البداية حتى يضمن العميل استلام رسالته دون تتبع أخطاء سيرفر الشركة
+    // ينطلق باسم شركتك الجديد والكامل وبشكل احترافي ومباشر
     // ==========================================
     const autoReplySubject = currentLocale === "ar" 
       ? "نشكرك على تواصلك مع مسار للاستيراد والتصدير والتجارة" 
@@ -85,12 +85,12 @@ export async function sendContactNotification(formData: {
 
     // ==========================================
     // 2️⃣ ثانياً: إرسال تفاصيل الاستفسار إلى إيميل شركتك الرسمي
-    // حتى لو حدث Bounce هنا، لن يؤثر على الرد التلقائي لأنه تم إرساله بالفعل بالأعلى
+    // استخدام onboarding@resend.dev يضمن تخطي حظر GoDaddy الصارم ووصول الاستفسار فوراً لوارد الشركة
     // ==========================================
     const adminReply = await resend.emails.send({
-      from: "Massar System <system@massartrading.com>", 
+      from: "Massar System <onboarding@resend.dev>", 
       to: "info@massartrading.com", 
-      replyTo: formData.email, 
+      replyTo: formData.email, // يحافظ على إمكانية الرد المباشر على العميل عند ضغط زر "رد" في إيميل الشركة
       subject: `Massar Inquiry from ${formData.name}`,
       text: `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || "N/A"}\nMessage: ${formData.message}\nLocale: ${formData.locale || "en"}`,
     });
