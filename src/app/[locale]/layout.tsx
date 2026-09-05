@@ -20,7 +20,7 @@ export default async function LocaleLayout({
   return (
     <>
       <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-WMECMKNP4N"
+        src="https://www.googletagmanager.com/gtag/js?id=G-TEC6V1TKQ4"
 
         strategy="afterInteractive"
       />
@@ -29,7 +29,8 @@ export default async function LocaleLayout({
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', 'G-WMECMKNP4N');
+          gtag('config', 'G-TEC6V1TKQ4');
+
         `}
       </Script>
       {children}
