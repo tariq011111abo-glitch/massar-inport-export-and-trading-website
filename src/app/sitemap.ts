@@ -8,7 +8,9 @@ import { LOCALES } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  // وضع رابط موقعك الفعلي مباشرة هنا لضمان خروج الروابط بشكل صحيح دائماً
+  const base = "https://massartrading.com"; 
+  
   await ensureSeeded();
   const rows = await db.select().from(products).where(eq(products.visible, true));
 
@@ -30,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const locale of LOCALES) {
       entries.push({
         url: `${base}/${locale}/products/${product.slug}`,
-        lastModified: product.createdAt,
+        lastModified: product.createdAt ? new Date(product.createdAt) : new Date(),
         changeFrequency: "weekly",
         priority: 0.7,
       });
